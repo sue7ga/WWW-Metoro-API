@@ -2,31 +2,38 @@ package WWW::Metoro::API;
 use 5.008005;
 use strict;
 use warnings;
-use Class::Accessor::Lite;
+use Mouse;
+use utf8;
 use URI;
+use LWP::UserAgent;
 
 our $VERSION = "0.01";
 
 use constant END_POINT => 'https://api.tokyometoroapp.jp/api/v2/';
 
-use Class::Accessor::Lite(
-   new => 1,
-   ro => [qw(
-      api_key
-   )],
-);
+has 'api_key' => (is => 'rw',isa => 'Str',required => 1);
 
 sub metoro{
  my $self = shift;
- 
  my $uri = END_POINT.'datapoints';
  my $url = URI->new($uri);
- my $apikey = $self->api_key;
- $url->query_form("rdf:type" => 'odpt:station',"acl:consumerKey" => $apikey);
- return $url;
+ my $param = {
+  "acl:consumerKey" => $self->api_key,
+  "rdf:type" => "odpt:Train",
+ };
+ $url->query_form(%$param);
+ $url =~ s/%3A/:/g;
+ my $ua = LWP::UserAgent->new;
+ my $res = $ua->get($url);
+ return $res;
 }
 
 1;
+
+
+
+
+
 __END__
 
 =encoding utf-8
